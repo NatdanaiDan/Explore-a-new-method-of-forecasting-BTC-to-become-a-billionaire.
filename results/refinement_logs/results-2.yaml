@@ -1,0 +1,63 @@
+config:
+  base_model: seasonal_naive
+  ckpt: lightning_logs/version_1/best_checkpoint.ckpt
+  context_length: 336
+  dataset: crypto
+  device: cuda:0
+  init_skip: false
+  iterations: 20
+  num_samples: 100
+  prediction_length: 24
+  refiner_configs:
+  - guidance: MSE
+    lr: 0.1
+    refiner_name: most_likely
+  - guidance: quantile
+    lr: 0.1
+    refiner_name: most_likely
+  - guidance: MSE
+    method: lmc
+    method_kwargs:
+      noise_scale: 0.1
+    refiner_name: mcmc
+    step_size: 0.1
+  - guidance: quantile
+    method: lmc
+    method_kwargs:
+      noise_scale: 0.1
+    refiner_name: mcmc
+    step_size: 0.1
+  use_features: false
+  use_lags: true
+  config: configs/refinement/crypto-seasonal_naive.yaml
+  out_dir: ./results
+  freq: H
+metrics:
+- model: baseline
+  model_params:
+    name: seasonal_naive
+  mean_wQuantileLoss: 0.007317049760781347
+  NRMSE: 0.02027252940563836
+  ND: 0.007317049760781348
+- model: most_likely
+  model_params: '{"guidance": "MSE", "lr": 0.1, "refiner_name": "most_likely"}'
+  mean_wQuantileLoss: 0.006192068011041403
+  NRMSE: 0.010796859457144415
+  ND: 0.004448051311542692
+- model: most_likely
+  model_params: '{"guidance": "quantile", "lr": 0.1, "refiner_name": "most_likely"}'
+  mean_wQuantileLoss: 0.03755557858960859
+  NRMSE: 0.044998525273128955
+  ND: 0.03249708674752253
+- model: mcmc
+  model_params: '{"guidance": "MSE", "method": "lmc", "method_kwargs": {"noise_scale":
+    0.1}, "refiner_name": "mcmc", "step_size": 0.1}'
+  mean_wQuantileLoss: 0.01424005063050729
+  NRMSE: 0.015368304221640459
+  ND: 0.006888682013971949
+- model: mcmc
+  model_params: '{"guidance": "quantile", "method": "lmc", "method_kwargs": {"noise_scale":
+    0.1}, "refiner_name": "mcmc", "step_size": 0.1}'
+  mean_wQuantileLoss: 0.03564374598632035
+  NRMSE: 0.029358559513761852
+  ND: 0.01681016671842108

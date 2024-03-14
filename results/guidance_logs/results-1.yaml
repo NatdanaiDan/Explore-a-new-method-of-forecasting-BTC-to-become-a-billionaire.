@@ -1,0 +1,28 @@
+config:
+  ckpt: lightning_logs/version_1/best_checkpoint.ckpt
+  context_length: 336
+  dataset: crypto
+  device: cuda:0
+  diffusion_config: diffusion_small_config
+  freq: H
+  init_skip: false
+  num_samples: 100
+  prediction_length: 24
+  sampler: ddpm
+  sampler_params:
+    guidance: quantile
+    scale: 2
+  setup: forecasting
+  use_features: false
+  use_lags: true
+  config: configs/guidance/guidance_crypto.yaml
+  out_dir: ./results
+  missing_data_configs:
+  - missing_scenario: none
+    missing_values: 0
+metrics:
+- missing_scenario: none
+  missing_values: 0
+  NRMSE: 0.02992347871427043
+  mean_wQuantileLoss: 0.009797443831601365
+  ND: 0.014006328601258392

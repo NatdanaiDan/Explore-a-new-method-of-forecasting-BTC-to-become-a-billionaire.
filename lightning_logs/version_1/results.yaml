@@ -1,0 +1,36 @@
+config:
+  batch_size: 64
+  config: configs/train_tsdiff/train_crypto.yaml
+  context_length: 336
+  dataset: crypto
+  device: cuda:0
+  diffusion_config: diffusion_small_config
+  eval_every: 50
+  freq: H
+  gradient_clip_val: 0.5
+  init_skip: false
+  lr: 0.001
+  max_epochs: 1000
+  missing_data_configs:
+  - missing_scenario: none
+    missing_values: 0
+  model: unconditional
+  normalization: mean
+  num_batches_per_epoch: 128
+  out_dir: ./
+  prediction_length: 24
+  sampler: ddpm
+  sampler_params:
+    guidance: quantile
+    scale: 2
+  setup: forecasting
+  use_features: false
+  use_lags: true
+  use_validation_set: true
+metrics:
+- ND: 0.012477614115115002
+  NRMSE: 0.02535637519547758
+  mean_wQuantileLoss: 0.008804361516822696
+  missing_scenario: none
+  missing_values: 0
+version: 0

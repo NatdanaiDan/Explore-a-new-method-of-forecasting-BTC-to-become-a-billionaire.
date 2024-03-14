@@ -1,0 +1,63 @@
+config:
+  base_model: deepar
+  ckpt: lightning_logs/version_1/best_checkpoint.ckpt
+  context_length: 336
+  dataset: crypto
+  device: cuda:0
+  init_skip: false
+  iterations: 20
+  num_samples: 100
+  prediction_length: 24
+  refiner_configs:
+  - guidance: MSE
+    lr: 0.1
+    refiner_name: most_likely
+  - guidance: quantile
+    lr: 0.1
+    refiner_name: most_likely
+  - guidance: MSE
+    method: lmc
+    method_kwargs:
+      noise_scale: 0.1
+    refiner_name: mcmc
+    step_size: 0.1
+  - guidance: quantile
+    method: lmc
+    method_kwargs:
+      noise_scale: 0.1
+    refiner_name: mcmc
+    step_size: 0.1
+  use_features: false
+  use_lags: true
+  config: configs/refinement/crypto-deepar.yaml
+  out_dir: ./results
+  freq: H
+metrics:
+- model: baseline
+  model_params:
+    name: deepar
+  mean_wQuantileLoss: 0.005830483784008294
+  NRMSE: 0.019254435787811497
+  ND: 0.007887380144811829
+- model: most_likely
+  model_params: '{"guidance": "MSE", "lr": 0.1, "refiner_name": "most_likely"}'
+  mean_wQuantileLoss: 0.006038509781123445
+  NRMSE: 0.00931262343232493
+  ND: 0.003977692268584024
+- model: most_likely
+  model_params: '{"guidance": "quantile", "lr": 0.1, "refiner_name": "most_likely"}'
+  mean_wQuantileLoss: 0.032900872161004305
+  NRMSE: 0.027063045507742012
+  ND: 0.018726450177965086
+- model: mcmc
+  model_params: '{"guidance": "MSE", "method": "lmc", "method_kwargs": {"noise_scale":
+    0.1}, "refiner_name": "mcmc", "step_size": 0.1}'
+  mean_wQuantileLoss: 0.015043722486199004
+  NRMSE: 0.01433235583817473
+  ND: 0.006241739541782613
+- model: mcmc
+  model_params: '{"guidance": "quantile", "method": "lmc", "method_kwargs": {"noise_scale":
+    0.1}, "refiner_name": "mcmc", "step_size": 0.1}'
+  mean_wQuantileLoss: 0.03485837313683587
+  NRMSE: 0.028280012075184605
+  ND: 0.015228966499094682

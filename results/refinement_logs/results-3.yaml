@@ -1,0 +1,32 @@
+config:
+  base_model: linear
+  ckpt: lightning_logs/version_1/best_checkpoint.ckpt
+  context_length: 336
+  dataset: crypto
+  device: cuda:0
+  diffusion_config: diffusion_small_config
+  init_skip: false
+  iterations: 20
+  num_samples: 100
+  prediction_length: 24
+  refiner_configs:
+  - guidance: MSE
+    lr: 0.1
+    refiner_name: most_likely
+  use_features: false
+  use_lags: true
+  config: configs/refinement/crypto-linear.yaml
+  out_dir: ./results
+  freq: H
+metrics:
+- model: baseline
+  model_params:
+    name: linear
+  NRMSE: 0.017251156414737803
+  ND: 0.006569758204411489
+  mean_wQuantileLoss: 0.006569758204411488
+- model: most_likely
+  model_params: '{"guidance": "MSE", "lr": 0.1, "refiner_name": "most_likely"}'
+  NRMSE: 0.010368750473965956
+  ND: 0.004602811722141661
+  mean_wQuantileLoss: 0.005923259354832473

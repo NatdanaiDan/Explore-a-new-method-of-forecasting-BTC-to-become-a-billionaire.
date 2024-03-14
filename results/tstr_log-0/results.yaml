@@ -1,0 +1,31 @@
+config:
+  ckpt: lightning_logs/version_1/best_checkpoint.ckpt
+  context_length: 336
+  dataset: crypto
+  device: cuda:0
+  diffusion_config: diffusion_small_config
+  init_skip: false
+  prediction_length: 24
+  scaling_type: mean
+  use_features: false
+  use_lags: true
+  config: configs/tstr/crypto.yaml
+  out_dir: ./results
+  samples_path: null
+  freq: H
+metrics:
+- model: linear
+  tstr_metrics:
+    ND: 0.01495074898138305
+    NRMSE: 0.03604613087674754
+    mean_wQuantileLoss: 0.014950748981383051
+- model: deepar
+  tstr_metrics:
+    ND: 0.03607235862675873
+    NRMSE: 0.0839367259817073
+    mean_wQuantileLoss: 0.03168951038992274
+- model: transformer
+  tstr_metrics:
+    ND: 0.02575615304211886
+    NRMSE: 0.058498510665646826
+    mean_wQuantileLoss: 0.021252128358200856
