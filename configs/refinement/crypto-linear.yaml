@@ -12,20 +12,5 @@ refiner_configs:
 - guidance: MSE
   lr: 0.1
   refiner_name: most_likely
-- guidance: quantile
-  lr: 0.1
-  refiner_name: most_likely
-- guidance: MSE
-  method: lmc
-  method_kwargs:
-    noise_scale: 0.1
-  refiner_name: mcmc
-  step_size: 0.1
-- guidance: quantile
-  method: lmc
-  method_kwargs:
-    noise_scale: 0.1
-  refiner_name: mcmc
-  step_size: 0.1
 use_features: false
 use_lags: true

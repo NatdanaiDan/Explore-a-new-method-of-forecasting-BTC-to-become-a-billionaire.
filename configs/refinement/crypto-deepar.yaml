@@ -1,9 +1,8 @@
-base_model: linear
+base_model: deepar
 ckpt: dummy/uber_tlc_hourly.ckpt
 context_length: 336
 dataset: crypto
 device: cuda:0
-diffusion_config: diffusion_small_config
 init_skip: false
 iterations: 20
 num_samples: 100
