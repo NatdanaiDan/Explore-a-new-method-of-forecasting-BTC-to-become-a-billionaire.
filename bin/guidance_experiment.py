@@ -19,15 +19,21 @@ from uncond_ts_diff.utils import (
     MaskInput,
 )
 from uncond_ts_diff.model import TSDiff
-from uncond_ts_diff.dataset import get_gts_dataset
+from uncond_ts_diff.dataset import get_gts_dataset,get_crypto
 from uncond_ts_diff.sampler import (
     DDPMGuidance,
     DDIMGuidance,
 )
 import uncond_ts_diff.configs as diffusion_configs
-
+import matplotlib.pyplot as plt
+import pandas as pd 
 guidance_map = {"ddpm": DDPMGuidance, "ddim": DDIMGuidance}
 
+def sample_df(forecast):
+    samples = forecast.samples
+    ns, h = samples.shape
+    dates = pd.date_range(start=forecast.start_date.to_timestamp(), periods=h, freq=forecast.freq)
+    return pd.DataFrame(samples.T, index=dates)
 
 def load_model(config):
     model = TSDiff(
@@ -114,11 +120,39 @@ def evaluate_guidance(
             num_samples=num_samples,
         )
         forecasts = list(tqdm(forecast_it, total=len(transformed_testdata)))
+
         tss = list(ts_it)
+        # print(f"tss: {tss}")
+        # print(f"forecasts: {forecasts}")
+        # print(f"type(tss): {type(tss)} len {len(tss)}")
+        # print(f"forecasts: {type(forecasts)} len {len(forecasts)}")
+        # print(f"tss[0]: {tss[0]}")
+        # print(f"tss[0]: {type(tss[0])} len {len(tss[0])}")
+        # print(f"forecasts[0]: {forecasts[0]}")
+        # print(f"forecasts[0]: {type(forecasts[0])} len {len(forecasts[0])}")
+        # print(f"forecasts[0] {sample_df(forecasts[0])}")
+        
+        # plt.plot(tss[0])
+        # forecasts[0].plot()
+        # plt.legend()
+        # plt.savefig("forecasts.png")
+        plt.figure(figsize=(20, 10))
+
+        # Create a subplot for each index of tss and forecasts
+        for i in range(5):
+            plt.subplot(1, 5, i+1)
+            plt.plot(tss[i][-72:].to_timestamp(), label=f'tss[{i}]')
+            forecasts[i].plot(label=f'forecasts[{i}]',color="blue")
+            plt.legend()
+
+        plt.savefig("plot/forecasts.png")
+        plt.show()
         evaluator = Evaluator()
         metrics, _ = evaluator(tss, forecasts)
         metrics = filter_metrics(metrics)
+        
         results.append(dict(**missing_data_kwargs, **metrics))
+        print(results)
 
     return results
 
@@ -133,7 +167,10 @@ def main(config: dict, log_dir: str):
     # Load dataset and model
     logger.info("Loading model")
     model = load_model(config)
-    dataset = get_gts_dataset(dataset_name)
+    if dataset_name == "crypto":
+        dataset = get_crypto(prediction_length=prediction_length,freq=freq)
+    else:
+        dataset = get_gts_dataset(dataset_name)
     assert dataset.metadata.freq == freq
     assert dataset.metadata.prediction_length == prediction_length
 

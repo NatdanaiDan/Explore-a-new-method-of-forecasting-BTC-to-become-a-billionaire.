@@ -5,7 +5,7 @@ import copy
 import logging
 import argparse
 from pathlib import Path
-
+import matplotlib.pyplot as plt
 import yaml
 import torch
 import numpy as np
@@ -25,7 +25,7 @@ from uncond_ts_diff.utils import (
     filter_metrics,
 )
 from uncond_ts_diff.model import TSDiff, LinearEstimator
-from uncond_ts_diff.dataset import get_gts_dataset
+from uncond_ts_diff.dataset import get_gts_dataset,get_crypto
 from uncond_ts_diff.sampler import (
     MostLikelyRefiner,
     MCMCRefiner,
@@ -84,12 +84,14 @@ def train_and_forecast_base_model(dataset, base_model_name, config):
         predictor = DeepAREstimator(
             prediction_length=dataset.metadata.prediction_length,
             freq=dataset.metadata.freq,
+            context_length=config["context_length"],
             **base_model_kwargs,
         ).train(list(dataset.train), cache_data=True)
     elif base_model_name == "transformer":
         predictor = TransformerEstimator(
             prediction_length=dataset.metadata.prediction_length,
             freq=dataset.metadata.freq,
+            context_length=config["context_length"],
             **base_model_kwargs,
         ).train(list(dataset.train), cache_data=True)
     elif base_model_name == "seasonal_naive":
@@ -166,7 +168,10 @@ def main(config: dict, log_dir: str):
 
     # Load dataset and model
     logger.info("Loading model")
-    dataset = get_gts_dataset(dataset_name)
+    if dataset_name == "crypto":
+        dataset = get_crypto(prediction_length=prediction_length,freq="H")
+    else:
+        dataset = get_gts_dataset(dataset_name)
     config["freq"] = dataset.metadata.freq
 
     assert prediction_length == dataset.metadata.prediction_length
@@ -224,6 +229,16 @@ def main(config: dict, log_dir: str):
             dataset, base_model_name, config
         )
 
+    plt.figure(figsize=(20, 10))
+    # Create a subplot for each index of tss and forecasts
+    for round in range(5):
+        plt.subplot(1, 5, round+1)
+        plt.plot(tss[round][-72:].to_timestamp(), label=f'tss[{round}]')
+        base_fcsts[round].plot(label=f'forecasts[{round}]',color="blue")
+        plt.legend()
+
+    plt.savefig(f"plot/forecasts_base_{config['base_model']}.png")
+    plt.show()
     # Evaluate base forecasts
     evaluator = Evaluator()
     baseline_metrics, _ = evaluator(tss, base_fcsts)
@@ -248,6 +263,7 @@ def main(config: dict, log_dir: str):
             **baseline_metrics,
         }
     ]
+    print(results)
 
     n_refiner_configs = len(config["refiner_configs"])
     for i, ref_config in enumerate(config["refiner_configs"]):
@@ -275,11 +291,24 @@ def main(config: dict, log_dir: str):
             predictor=refiner_predictor,
             num_samples=num_samples,
         )
+        forecasts = list(tqdm(forecast_it, total=len(transformed_testdata)))
+        tss = list(ts_it)
+        ##plot 
+
+        plt.figure(figsize=(20, 10))
+        # Create a subplot for each index of tss and forecasts
+        for round in range(5):
+            plt.subplot(1, 5, round+1)
+            plt.plot(tss[round][-72:].to_timestamp(), label=f'tss[{round}]')
+            forecasts[round].plot(label=f'forecasts[{round}]',color="blue")
+            plt.legend()
+
+        plt.savefig(f"plot/forecasts_{refiner_name}_{i}_{config['base_model']}.png")
+        plt.show()
+
+
         evaluator = Evaluator()
-        refined_metrics, _ = evaluator(
-            list(ts_it),
-            list(tqdm(forecast_it, total=len(transformed_testdata))),
-        )
+        refined_metrics, _ = evaluator(tss, forecasts)
         refined_metrics = filter_metrics(refined_metrics)
 
         results.append(

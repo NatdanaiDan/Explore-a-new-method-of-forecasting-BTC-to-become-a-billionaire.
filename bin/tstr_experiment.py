@@ -5,7 +5,7 @@ import math
 import logging
 import argparse
 from pathlib import Path
-
+import matplotlib.pyplot as plt
 import yaml
 import torch
 import numpy as np
@@ -35,7 +35,7 @@ from uncond_ts_diff.utils import (
     filter_metrics,
 )
 from uncond_ts_diff.model import TSDiff, LinearEstimator
-from uncond_ts_diff.dataset import get_gts_dataset
+from uncond_ts_diff.dataset import get_gts_dataset,get_crypto
 import uncond_ts_diff.configs as diffusion_configs
 
 DOWNSTREAM_MODELS = ["linear", "deepar", "transformer"]
@@ -110,6 +110,7 @@ def evaluate_tstr(
     test_dataset,
     context_length,
     prediction_length,
+    model_name,
     num_samples=100,
     scaling_type="mean",
 ):
@@ -135,8 +136,24 @@ def evaluate_tstr(
         num_samples=num_samples,
         scaling_type=scaling_type,
     )
+    fcsts = list(tqdm(fcst_iter))
+    tss = list(ts_iter)
+
+
+    plt.figure(figsize=(20, 10))
+    # Create a subplot for each index of tss and forecasts
+    for round in range(5):
+        plt.subplot(1, 5, round+1)
+        plt.plot(tss[round][-72:].to_timestamp(), label=f'tss[{round}]')
+        fcsts[round].plot(label=f'forecasts[{round}]',color="blue")
+        plt.legend()
+
+    plt.savefig(f"plot/forecasts_tstr_{model_name}.png")
+    plt.show()
+
+
     evaluator = Evaluator()
-    metrics, _ = evaluator(list(ts_iter), list(fcst_iter))
+    metrics, _ = evaluator(tss, fcsts)
     return filter_metrics(metrics)
 
 
@@ -202,8 +219,10 @@ def train_and_evaluate(
         tstr_predictor=tstr_predictor,
         test_dataset=dataset.test,
         context_length=context_length,
+        model_name=model_name,
         prediction_length=prediction_length,
         scaling_type=scaling_type,
+
     )
 
     return dict(
@@ -229,7 +248,10 @@ def main(config: dict, log_dir: str, samples_path: str):
 
     # Load dataset and model
     logger.info("Loading model")
-    dataset = get_gts_dataset(dataset_name)
+    if dataset_name == "crypto":
+        dataset = get_crypto(prediction_length=prediction_length,freq="H")
+    else:
+        dataset = get_gts_dataset(dataset_name)
     config["freq"] = dataset.metadata.freq
     assert prediction_length == dataset.metadata.prediction_length
 
